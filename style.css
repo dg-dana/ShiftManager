@@ -1,4 +1,115 @@
-html {
-  height: 100%;
-  width: 100%;
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+h2 {
+  color: #333;
+  font-size: 1.5em;
+}
+
+section {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input, select, button {
+  padding: 8px;
+  margin: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.user-list-item, .template-list-item {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.user-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+#calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.day {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  min-height: 100px;
+  position: relative;
+}
+
+.shift {
+  padding: 5px;
+  margin: 2px 0;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  position: relative;
+}
+
+.shift:hover .tooltip {
+  display: block;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  background: #333;
+  color: white;
+  padding: 5px;
+  border-radius: 4px;
+  z-index: 10;
+  top: 100%;
+  left: 0;
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 10px;
+  }
+  #calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 0.8em;
+  }
+  .day {
+    min-height: 80px;
+  }
 }

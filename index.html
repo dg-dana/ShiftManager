@@ -1,16 +1,66 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>replit</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Shift Calendar</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-  Hello world
-  <script src="script.js"></script>
-</body>
+  <div class="container">
+    <!-- User Management -->
+    <section id="user-management">
+      <h2>Family Members</h2>
+      <div class="user-form">
+        <input type="text" id="user-name" placeholder="Enter name">
+        <input type="color" id="user-color" value="#FF6B6B">
+        <button onclick="addUser()">Add User</button>
+      </div>
+      <div id="user-list"></div>
+      <select id="active-user">
+        <option value="">Select User</option>
+      </select>
+    </section>
 
+    <!-- Shift Templates -->
+    <section id="template-management">
+      <h2>Shift Templates</h2>
+      <div class="template-form">
+        <select id="template-user">
+          <option value="">Select User</option>
+        </select>
+        <input type="text" id="template-code" placeholder="Shift Code (e.g., FD)">
+        <input type="text" id="template-name" placeholder="Shift Name">
+        <input type="time" id="template-start">
+        <input type="time" id="template-end">
+        <button onclick="addTemplate()">Add Template</button>
+      </div>
+      <div id="template-list"></div>
+    </section>
+
+    <!-- Shift Input -->
+    <section id="shift-input">
+      <h2>Add Shifts</h2>
+      <input type="text" id="shift-text" placeholder="e.g., FD 12.8 or NS 1.9-5.9">
+      <button onclick="addShift()">Add Shift</button>
+    </section>
+
+    <!-- Calendar -->
+    <section id="calendar">
+      <h2>Shift Calendar</h2>
+      <div class="calendar-controls">
+        <button onclick="prevMonth()">◄</button>
+        <span id="calendar-month-year"></span>
+        <button onclick="nextMonth()">►</button>
+      </div>
+      <div id="calendar-grid"></div>
+    </section>
+  </div>
+
+  <script src="js/users.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/main.js"></script>
+</body>
 </html>
