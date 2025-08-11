@@ -64,13 +64,23 @@ function renderMonthView(grid, monthYear) {
 
   const firstDay = (date.getDay() + 6) % 7; // Adjust for Monday start
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  grid.innerHTML = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    .map(day => `<div class="day day-header">${day}</div>`).join('');
+  
+  let tableHTML = '<table class="calendar-table"><thead><tr>';
+  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => {
+    tableHTML += `<th class="day-header">${day}</th>`;
+  });
+  tableHTML += '</tr></thead><tbody>';
 
+  let currentWeek = '<tr>';
+  let cellCount = 0;
+
+  // Empty cells before first day
   for (let i = 0; i < firstDay; i++) {
-    grid.innerHTML += '<div class="day"></div>';
+    currentWeek += '<td class="day empty-day"></td>';
+    cellCount++;
   }
 
+  // Days of the month
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = formatDate(new Date(currentYear, currentMonth, day));
     const dayShifts = shifts.filter(s => s.date === dateStr);
@@ -83,8 +93,31 @@ function renderMonthView(grid, monthYear) {
         </div>
       `;
     }).join('');
-    grid.innerHTML += `<div class="day">${day}${shiftHTML}</div>`;
+    
+    currentWeek += `<td class="day"><div class="day-number">${day}</div>${shiftHTML}</td>`;
+    cellCount++;
+
+    // Start new week row
+    if (cellCount % 7 === 0) {
+      currentWeek += '</tr>';
+      tableHTML += currentWeek;
+      currentWeek = '<tr>';
+    }
   }
+
+  // Fill remaining cells in last week
+  while (cellCount % 7 !== 0) {
+    currentWeek += '<td class="day empty-day"></td>';
+    cellCount++;
+  }
+  
+  if (currentWeek !== '<tr>') {
+    currentWeek += '</tr>';
+    tableHTML += currentWeek;
+  }
+
+  tableHTML += '</tbody></table>';
+  grid.innerHTML = tableHTML;
 }
 
 function renderWeekView(grid, monthYear) {
@@ -93,12 +126,13 @@ function renderWeekView(grid, monthYear) {
   weekEnd.setDate(weekStart.getDate() + 6);
   monthYear.textContent = `${weekStart.toLocaleDateString('default', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-  grid.innerHTML = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    .map((day, i) => {
-      const current = new Date(weekStart);
-      current.setDate(weekStart.getDate() + i);
-      return `<div class="day day-header">${day}<br>${current.getDate()}</div>`;
-    }).join('');
+  let tableHTML = '<table class="calendar-table"><thead><tr>';
+  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach((day, i) => {
+    const current = new Date(weekStart);
+    current.setDate(weekStart.getDate() + i);
+    tableHTML += `<th class="day-header">${day}<br>${current.getDate()}</th>`;
+  });
+  tableHTML += '</tr></thead><tbody><tr>';
 
   for (let i = 0; i < 7; i++) {
     const current = new Date(weekStart);
@@ -114,15 +148,17 @@ function renderWeekView(grid, monthYear) {
         </div>
       `;
     }).join('');
-    grid.innerHTML += `<div class="day">${shiftHTML}</div>`;
+    tableHTML += `<td class="day">${shiftHTML}</td>`;
   }
+
+  tableHTML += '</tr></tbody></table>';
+  grid.innerHTML = tableHTML;
 }
 
 function renderDayView(grid, monthYear) {
   const dateStr = formatDate(currentDay);
   monthYear.textContent = currentDay.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-  grid.innerHTML = `<div class="day day-header">${currentDay.getDate()}</div>`;
   const dayShifts = shifts.filter(s => s.date === dateStr);
   const shiftHTML = dayShifts.map(s => {
     const user = users.find(u => u.id === s.userId);
@@ -133,7 +169,23 @@ function renderDayView(grid, monthYear) {
       </div>
     `;
   }).join('');
-  grid.innerHTML += `<div class="day">${shiftHTML || 'No shifts'}</div>`;
+
+  let tableHTML = `
+    <table class="calendar-table">
+      <thead>
+        <tr>
+          <th class="day-header">${currentDay.getDate()}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="day">${shiftHTML || 'No shifts'}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  
+  grid.innerHTML = tableHTML;
 }
 
 function deleteShift(userId, date, code) {

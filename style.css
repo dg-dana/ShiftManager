@@ -101,6 +101,42 @@ button:hover {
   display: block;
 }
 
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.calendar-table th,
+.calendar-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: top;
+  position: relative;
+}
+
+.calendar-table th {
+  background-color: #f4f4f9;
+  font-weight: bold;
+  text-align: center;
+  height: 40px;
+}
+
+.calendar-table td.day {
+  height: 120px;
+  width: 14.28%;
+  min-height: 120px;
+}
+
+.calendar-table td.empty-day {
+  background-color: #f9f9f9;
+}
+
+.day-number {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
 .tooltip {
   display: none;
   position: absolute;
@@ -142,12 +178,16 @@ button:hover {
   .container {
     padding: 10px;
   }
-  .month-view, .week-view {
-    grid-template-columns: repeat(7, 1fr);
+  .calendar-table {
     font-size: 0.8em;
   }
-  .day {
+  .calendar-table td.day {
+    height: 80px;
     min-height: 80px;
+    padding: 5px;
+  }
+  .calendar-table th {
+    height: 30px;
     padding: 5px;
   }
   .shift {
