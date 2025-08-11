@@ -1,2 +1,2 @@
-run = "python -m http.server 8080"
+run = "npx serve -s . -l 8080"
 language = "html"
