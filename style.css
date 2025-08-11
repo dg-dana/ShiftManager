@@ -55,20 +55,13 @@ button:hover {
 }
 
 #calendar-grid {
-  display: grid;
-  gap: 5px;
+  display: block;
 }
 
-.month-view {
-  grid-template-columns: repeat(7, 1fr);
-}
-
-.week-view {
-  grid-template-columns: repeat(7, 1fr);
-}
-
+.month-view,
+.week-view,
 .day-view {
-  grid-template-columns: 1fr;
+  display: block;
 }
 
 .day {
