@@ -11,4 +11,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx --yes serve -s . -l 8080"
+args = "python3 -m http.server 8080"
