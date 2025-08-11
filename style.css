@@ -56,8 +56,19 @@ button:hover {
 
 #calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
   gap: 5px;
+}
+
+.month-view {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.week-view {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day-view {
+  grid-template-columns: 1fr;
 }
 
 .day {
@@ -66,6 +77,14 @@ button:hover {
   padding: 10px;
   min-height: 100px;
   position: relative;
+  box-sizing: border-box;
+}
+
+.day-header {
+  font-weight: bold;
+  text-align: center;
+  background: #f4f4f9;
+  padding: 5px;
 }
 
 .shift {
@@ -92,24 +111,50 @@ button:hover {
   z-index: 10;
   top: 100%;
   left: 0;
+  white-space: nowrap;
 }
 
 .calendar-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 5px;
+}
+
+.view-btn {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  background: #f4f4f9;
+  cursor: pointer;
+}
+
+.view-btn.active {
+  background: #4CAF50;
+  color: white;
 }
 
 @media (max-width: 600px) {
   .container {
     padding: 10px;
   }
-  #calendar-grid {
+  .month-view, .week-view {
     grid-template-columns: repeat(7, 1fr);
     font-size: 0.8em;
   }
   .day {
     min-height: 80px;
+    padding: 5px;
+  }
+  .shift {
+    font-size: 0.8em;
+  }
+  .view-btn {
+    padding: 5px;
+    font-size: 0.9em;
   }
 }

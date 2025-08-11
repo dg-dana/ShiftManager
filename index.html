@@ -49,11 +49,23 @@
     <section id="calendar">
       <h2>Shift Calendar</h2>
       <div class="calendar-controls">
-        <button onclick="prevMonth()">◄</button>
+        <button onclick="prevPeriod()">◄</button>
         <span id="calendar-month-year"></span>
-        <button onclick="nextMonth()">►</button>
+        <button onclick="nextPeriod()">►</button>
+        <div class="view-toggle">
+          <button onclick="setView('month')" class="view-btn active" id="month-view">Month</button>
+          <button onclick="setView('week')" class="view-btn" id="week-view">Week</button>
+          <button onclick="setView('day')" class="view-btn" id="day-view">Day</button>
+        </div>
       </div>
       <div id="calendar-grid"></div>
+    </section>
+
+    <!-- Import/Export -->
+    <section id="import-export">
+      <h2>Backup</h2>
+      <input type="file" id="import-file" onchange="importData(event)">
+      <button onclick="exportData()">Export Data</button>
     </section>
   </div>
 
