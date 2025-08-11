@@ -99,24 +99,10 @@ button:hover {
   border-collapse: collapse;
   margin: 0;
   table-layout: fixed;
-  display: table;
-}
-
-.calendar-table thead {
-  display: table-header-group;
-}
-
-.calendar-table tbody {
-  display: table-row-group;
-}
-
-.calendar-table tr {
-  display: table-row;
 }
 
 .calendar-table th,
 .calendar-table td {
-  display: table-cell;
   border: 1px solid #ddd;
   padding: 8px;
   vertical-align: top;
