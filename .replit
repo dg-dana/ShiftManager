@@ -1,2 +1,14 @@
 run = "python3 -m http.server 8080"
 language = "html"
+
+[workflows]
+runButton = "Static Server"
+
+[[workflows.workflow]]
+name = "Static Server"
+author = 45852818
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx --yes serve -s . -l 8080"
