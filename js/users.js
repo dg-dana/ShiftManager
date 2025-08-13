@@ -1,71 +1,74 @@
-// Initialize users from localStorage or as an empty array
-let users = JSON.parse(localStorage.getItem('users')) || [];
+// Firestore-backed users array
+let users = [];
 
-function addUser() {
+// Real-time Firestore listener for "users" collection
+import { 
+  collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc 
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const usersRef = collection(window.db, "users");
+const usersQuery = query(usersRef, orderBy("createdAt", "asc"));
+
+// Listen for changes in Firestore and update UI
+onSnapshot(usersQuery, snapshot => {
+  users = snapshot.docs.map(docSnap => ({
+    id: docSnap.id, // Firestore document ID
+    ...docSnap.data()
+  }));
+  updateUserList();
+  updateUserSelects();
+});
+
+// Add a new user to Firestore
+async function addUser() {
   const nameInput = document.getElementById('user-name');
   const colorInput = document.getElementById('user-color');
   const name = nameInput.value.trim();
   const color = colorInput.value;
 
-  // Log inputs for debugging
   console.log('Attempting to add user:', { name, color, userCount: users.length });
 
   // Validation
   if (!name) {
     alert('Please enter a name.');
-    console.log('Error: Name is empty');
     return;
   }
   if (users.length >= 5) {
     alert('Maximum 5 users allowed.');
-    console.log('Error: Max users reached');
     return;
   }
   if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) {
     alert('This name is already taken.');
-    console.log('Error: Duplicate name');
     return;
   }
 
-  // Create new user
-  const user = {
-    id: Date.now(),
-    name,
-    color,
-    templates: []
-  };
-  users.push(user);
-
-  // Save to localStorage
   try {
-    localStorage.setItem('users', JSON.stringify(users));
-    console.log('User saved:', user);
-  } catch (e) {
-    alert('Error saving user to localStorage.');
-    console.error('localStorage error:', e);
-    return;
+    await addDoc(usersRef, {
+      name,
+      color,
+      templates: [],
+      createdAt: new Date()
+    });
+    console.log('User added to Firestore:', name);
+    nameInput.value = '';
+  } catch (error) {
+    console.error('Error adding user:', error);
+    alert('Error adding user to database.');
   }
-
-  // Clear input and update UI
-  nameInput.value = '';
-  updateUserList();
-  updateUserSelects();
 }
 
-function removeUser(id) {
+// Remove a user from Firestore
+async function removeUser(id) {
   console.log('Removing user with id:', id);
-  users = users.filter(u => u.id !== id);
   try {
-    localStorage.setItem('users', JSON.stringify(users));
-  } catch (e) {
-    console.error('localStorage error:', e);
+    await deleteDoc(doc(window.db, "users", id));
+  } catch (error) {
+    console.error('Error removing user:', error);
     alert('Error removing user.');
-    return;
   }
-  updateUserList();
-  updateUserSelects();
 }
 
+// Update user list in the DOM
 function updateUserList() {
   const userList = document.getElementById('user-list');
   if (!userList) {
@@ -76,12 +79,13 @@ function updateUserList() {
     <div class="user-list-item">
       <span class="user-color" style="background: ${u.color};"></span>
       ${u.name}
-      <button onclick="removeUser(${u.id})">Delete</button>
+      <button onclick="removeUser('${u.id}')">Delete</button>
     </div>
   `).join('');
   console.log('User list updated:', users);
 }
 
+// Update dropdowns
 function updateUserSelects() {
   const activeSelect = document.getElementById('active-user');
   const templateSelect = document.getElementById('template-user');
