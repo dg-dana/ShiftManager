@@ -69,10 +69,89 @@
     </section>
   </div>
 
+  <!-- Existing scripts -->
   <script src="js/users.js"></script>
   <script src="js/templates.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/calendar.js"></script>
   <script src="js/main.js"></script>
+
+  <!-- Firebase integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInAnonymously,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBCt2aZOWDLznozrVNTg4OIw7s5WBkx18Y",
+      authDomain: "shift-calendar-18355.firebaseapp.com",
+      projectId: "shift-calendar-18355",
+      storageBucket: "shift-calendar-18355.firebasestorage.app",
+      messagingSenderId: "29766311162",
+      appId: "1:29766311162:web:11f376db291eae0550bd43",
+      measurementId: "G-4PEYYWDTFD"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Sign in anonymously
+    signInAnonymously(auth).catch(err => console.error("Anon sign-in failed:", err));
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        console.log("Signed in as:", user.uid);
+      }
+    });
+
+    // Example Firestore functions — connect these to your existing addUser/addShift later
+    window.firebaseAddUser = async function(name, color) {
+      if (!name) return;
+      await addDoc(collection(db, "users"), {
+        name,
+        color,
+        createdAt: serverTimestamp()
+      });
+    };
+
+    window.firebaseAddShift = async function(userId, startISO, endISO, note = "") {
+      await addDoc(collection(db, "shifts"), {
+        userId,
+        startTime: startISO,
+        endTime: endISO,
+        note,
+        createdAt: serverTimestamp()
+      });
+    };
+
+    // Example: Realtime listener for shifts (update your UI here)
+    const shiftsQuery = query(collection(db, "shifts"), orderBy("createdAt", "desc"));
+    onSnapshot(shiftsQuery, snapshot => {
+      const listEl = document.getElementById("shiftsList");
+      if (!listEl) return;
+      listEl.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `${data.userId} — ${data.startTime} → ${data.endTime} (${data.note || ""})`;
+        listEl.appendChild(li);
+      });
+    });
+  </script>
 </body>
 </html>
