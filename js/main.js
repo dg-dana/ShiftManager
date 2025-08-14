@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTemplateList();
   renderCalendar();
 });
-
+console.log("Users array at start:", users);
+console.log("Shifts array at start:", shifts);
 // Import/Export functionality
 function exportData() {
   const data = { users, shifts };
