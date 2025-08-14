@@ -1,3 +1,26 @@
+(function() {
+  const debugEl = document.getElementById('debug-console');
+  
+  function printToDebug(...args) {
+    const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+    debugEl.innerHTML += `<div>${message}</div>`;
+    debugEl.scrollTop = debugEl.scrollHeight;
+  }
+  
+  const originalLog = console.log;
+  const originalError = console.error;
+  
+  console.log = function(...args) {
+    originalLog.apply(console, args);
+    printToDebug('[LOG]', ...args);
+  };
+  
+  console.error = function(...args) {
+    originalError.apply(console, args);
+    printToDebug('<span style="color:red">[ERROR]</span>', ...args);
+  };
+})();
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUsersFromFirestore();
     await loadShiftsFromFirestore();
