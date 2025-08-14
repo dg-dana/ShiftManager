@@ -44,6 +44,7 @@ function nextPeriod() {
 }
 
 function renderCalendar() {
+  console.log("Rendering calendar in", currentView, "view");
   const grid = document.getElementById('calendar-grid');
   const monthYear = document.getElementById('calendar-month-year');
   grid.className = `${currentView}-view`;
