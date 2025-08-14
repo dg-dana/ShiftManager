@@ -1,36 +1,84 @@
-document.addEventListener('DOMContentLoaded', () => {
-  updateUserList();
-  updateUserSelects();
-  updateTemplateList();
-  renderCalendar();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadUsersFromFirestore();
+    await loadShiftsFromFirestore();
+    updateUserList();
+    updateUserSelects();
+    updateTemplateList();
+    renderCalendar();
 });
 
-// Import/Export functionality
-function exportData() {
-  const data = { users, shifts };
-  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'shift-calendar.json';
-  a.click();
+// ==== LOAD DATA FROM FIRESTORE ====
+async function loadUsersFromFirestore() {
+    const snapshot = await db.collection("users").get();
+    users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-function importData(event) {
-  const file = event.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const data = JSON.parse(e.target.result);
-      users = data.users || [];
-      shifts = data.shifts || [];
-      localStorage.setItem('users', JSON.stringify(users));
-      localStorage.setItem('shifts', JSON.stringify(shifts));
-      updateUserList();
-      updateUserSelects();
-      updateTemplateList();
-      renderCalendar();
+async function loadShiftsFromFirestore() {
+    const snapshot = await db.collection("shifts").get();
+    shifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// ==== EXPORT DATA (JSON FILE) ====
+async function exportData() {
+    const usersSnap = await db.collection("users").get();
+    const shiftsSnap = await db.collection("shifts").get();
+
+    const data = {
+        users: usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        shifts: shiftsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shift-calendar.json';
+    a.click();
+}
+
+// ==== IMPORT DATA (UPLOAD TO FIRESTORE) ====
+async function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async e => {
+        const data = JSON.parse(e.target.result);
+
+        // Overwrite Firestore collections
+        const batch = db.batch();
+
+        // Clear existing data (optional: only if you want a full replace)
+        const usersSnap = await db.collection("users").get();
+        usersSnap.forEach(doc => batch.delete(doc.ref));
+
+        const shiftsSnap = await db.collection("shifts").get();
+        shiftsSnap.forEach(doc => batch.delete(doc.ref));
+
+        // Add imported users
+        (data.users || []).forEach(user => {
+            const ref = db.collection("users").doc(user.id || undefined);
+            batch.set(ref, user);
+        });
+
+        // Add imported shifts
+        (data.shifts || []).forEach(shift => {
+            const ref = db.collection("shifts").doc(shift.id || undefined);
+            batch.set(ref, shift);
+        });
+
+        await batch.commit();
+
+        // Reload app state
+        await loadUsersFromFirestore();
+        await loadShiftsFromFirestore();
+        updateUserList();
+        updateUserSelects();
+        updateTemplateList();
+        renderCalendar();
+
+        alert('Data imported successfully!');
+    };
+
     reader.readAsText(file);
-  }
 }
