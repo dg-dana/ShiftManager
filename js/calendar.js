@@ -119,6 +119,7 @@ function renderMonthView(grid, monthYear) {
 
   tableHTML += '</tbody></table>';
   grid.innerHTML = tableHTML;
+  console.log("Month HTML length:", tableHTML.length);
 }
 
 function renderWeekView(grid, monthYear) {
