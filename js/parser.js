@@ -1,4 +1,4 @@
-// ==== SHIFT ADDING USING FIRESTORE ====
+// ==== SHIFT ADDING USING FIRESTORE (MODULAR SDK) ====
 async function addShift() {
     const userId = document.getElementById('active-user').value.trim();
     const input = document.getElementById('shift-text').value.trim();
@@ -10,7 +10,7 @@ async function addShift() {
     }
 
     const [code, dateStr] = input.split(/\s+/);
-    const template = user.templates?.find(t => t.code === code.toUpperCase());
+    const template = user.templates?.find(t => t.code.toUpperCase() === code.toUpperCase());
 
     if (!template) {
         alert('Invalid shift code.');
@@ -18,7 +18,7 @@ async function addShift() {
     }
 
     const dates = parseDateRange(dateStr);
-    if (!dates) {
+    if (!dates || dates.length === 0) {
         alert('Invalid date format. Use DD.MM or DD.MM-DD.MM');
         return;
     }
@@ -27,19 +27,20 @@ async function addShift() {
     for (let date of dates) {
         const existing = shifts.find(s => s.userId === userId && s.date === date);
         if (!existing) {
-            await db.collection("shifts").add({
+            await addDoc(collection(db, "shifts"), {
                 userId: userId,
                 date: date, // Stored as YYYY-MM-DD
                 templateCode: code.toUpperCase(),
                 shiftName: template.name,
                 startTime: template.start || null,
                 endTime: template.end || null,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: serverTimestamp()
             });
         }
     }
 
     document.getElementById('shift-text').value = '';
+    renderCalendar(); // update calendar immediately
 }
 
 // ==== DATE RANGE PARSER ====
@@ -49,8 +50,8 @@ function parseDateRange(dateStr) {
     const match = dateStr.match(dateRegex);
     if (!match) return null;
 
-    const startDay = parseInt(match[1]);
-    const startMonth = parseInt(match[2]) - 1;
+    const startDay = parseInt(match[1], 10);
+    const startMonth = parseInt(match[2], 10) - 1; // JS months 0-11
 
     // Single date
     if (!match[3]) {
@@ -58,19 +59,25 @@ function parseDateRange(dateStr) {
     }
 
     // Date range
-    const endDay = parseInt(match[3]);
-    const endMonth = parseInt(match[4]) - 1;
+    const endDay = parseInt(match[3], 10);
+    const endMonth = parseInt(match[4], 10) - 1;
+
     const dates = [];
     let current = new Date(currentYear, startMonth, startDay);
     const end = new Date(currentYear, endMonth, endDay);
-    
+
+    // Safety: prevent infinite loops for invalid ranges
+    if (current > end) return null;
+
     while (current <= end) {
         dates.push(formatDate(current));
         current.setDate(current.getDate() + 1);
     }
+
     return dates;
 }
 
+// ==== DATE FORMATTING ====
 function formatDate(date) {
-    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
