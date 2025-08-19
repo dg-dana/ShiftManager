@@ -32,19 +32,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ==== LOAD DATA FROM FIRESTORE ====
 async function loadUsersFromFirestore() {
-    const snapshot = await db.collection("users").get();
+    const snapshot = await getDocs(collection(db, "users"));
     users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function loadShiftsFromFirestore() {
-    const snapshot = await db.collection("shifts").get();
+    const snapshot = await getDocs(collection(db, "shifts"));
     shifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 // ==== EXPORT DATA (JSON FILE) ====
 async function exportData() {
-    const usersSnap = await db.collection("users").get();
-    const shiftsSnap = await db.collection("shifts").get();
+    const usersSnap = await getDocs(collection(db, "users"));
+    const shiftsSnap = await getDocs(collection(db, "shifts"));
 
     const data = {
         users: usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
@@ -67,26 +67,25 @@ async function importData(event) {
     const reader = new FileReader();
     reader.onload = async e => {
         const data = JSON.parse(e.target.result);
+        const batch = writeBatch(db);
 
-        // Overwrite Firestore collections
-        const batch = db.batch();
+        // Clear existing users
+        const usersSnap = await getDocs(collection(db, "users"));
+        usersSnap.forEach(docSnap => batch.delete(doc(db, "users", docSnap.id)));
 
-        // Clear existing data (optional: only if you want a full replace)
-        const usersSnap = await db.collection("users").get();
-        usersSnap.forEach(doc => batch.delete(doc.ref));
-
-        const shiftsSnap = await db.collection("shifts").get();
-        shiftsSnap.forEach(doc => batch.delete(doc.ref));
+        // Clear existing shifts
+        const shiftsSnap = await getDocs(collection(db, "shifts"));
+        shiftsSnap.forEach(docSnap => batch.delete(doc(db, "shifts", docSnap.id)));
 
         // Add imported users
         (data.users || []).forEach(user => {
-            const ref = db.collection("users").doc(user.id || undefined);
+            const ref = doc(db, "users", user.id || undefined);
             batch.set(ref, user);
         });
 
         // Add imported shifts
         (data.shifts || []).forEach(shift => {
-            const ref = db.collection("shifts").doc(shift.id || undefined);
+            const ref = doc(db, "shifts", shift.id || undefined);
             batch.set(ref, shift);
         });
 
