@@ -1,199 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family Shift Calendar</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shift Calendar</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  #user-list li { margin-bottom: 5px; }
+  .user-color { display:inline-block; width:12px; height:12px; margin-right:5px; vertical-align:middle; }
+  #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
+  .day { border:1px solid #ccc; padding:5px; min-height:50px; position:relative; }
+  .day-header { background:#eee; font-weight:bold; text-align:center; }
+  .shift { margin-top:2px; padding:2px; color:#fff; font-size:0.9em; border-radius:3px; display:flex; justify-content:space-between; align-items:center; }
+  #debug-console { border:1px solid #ccc; height:150px; overflow:auto; margin-top:20px; padding:5px; font-size:0.8em; background:#f9f9f9; }
+  button { margin-left:5px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <!-- User Management -->
-    <section id="user-management">
-      <h2>Family Members</h2>
-      <div class="user-form">
-        <input type="text" id="user-name" placeholder="Enter name">
-        <input type="color" id="user-color" value="#FF6B6B">
-        <button onclick="addUser()">Add User</button>
-      </div>
-      <div id="user-list"></div>
-      <select id="active-user">
-        <option value="">Select User</option>
-      </select>
-    </section>
 
-    <!-- Shift Templates -->
-    <section id="template-management">
-      <h2>Shift Templates</h2>
-      <div class="template-form">
-        <select id="template-user">
-          <option value="">Select User</option>
-        </select>
-        <input type="text" id="template-code" placeholder="Shift Code (e.g., FD)">
-        <input type="text" id="template-name" placeholder="Shift Name">
-        <input type="time" id="template-start">
-        <input type="time" id="template-end">
-        <button onclick="addTemplate()">Add Template</button>
-      </div>
-      <div id="template-list"></div>
-    </section>
+<h1>Shift Calendar</h1>
 
-    <!-- Shift Input -->
-    <section id="shift-input">
-      <h2>Add Shifts</h2>
-      <input type="text" id="shift-text" placeholder="e.g., FD 12.8 or NS 1.9-5.9">
-      <button onclick="addShift()">Add Shift</button>
-    </section>
+<!-- User management -->
+<h2>Users</h2>
+<input type="text" id="user-name" placeholder="User name">
+<button onclick="addUser()">Add User</button>
+<ul id="user-list"></ul>
 
-    <!-- Calendar -->
-    <section id="calendar">
-      <h2>Shift Calendar</h2>
-      <div class="calendar-controls">
-        <button onclick="prevPeriod()">◄</button>
-        <span id="calendar-month-year"></span>
-        <button onclick="nextPeriod()">►</button>
-        <div class="view-toggle">
-          <button onclick="setView('month')" class="view-btn active" id="month-view">Month</button>
-          <button onclick="setView('week')" class="view-btn" id="week-view">Week</button>
-          <button onclick="setView('day')" class="view-btn" id="day-view">Day</button>
-        </div>
-      </div>
-      <div id="calendar-grid"></div>
-    </section>
+<!-- User filter -->
+<h2>Filter</h2>
+<select id="user-filter" onchange="renderCalendar()">
+  <option value="all">All Users</option>
+</select>
 
-    <!-- Import/Export -->
-    <section id="import-export">
-      <h2>Backup</h2>
-      <input type="file" id="import-file" onchange="importData(event)">
-      <button onclick="exportData()">Export Data</button>
-    </section>
+<!-- Shift input -->
+<h2>Add Shift</h2>
+<select id="active-user">
+  <option value="">Select User</option>
+</select>
+<input type="text" id="shift-text" placeholder="Shift code + date (e.g., A 01.08 or B 01.08-03.08)">
+<button onclick="addShift()">Add Shift</button>
 
-    <!-- Shifts List (for Firebase debug/testing) -->
-    <section id="shifts-section">
-      <h2>Shifts (Live from Firebase)</h2>
-      <ul id="shiftsList"></ul>
-    </section>
-  </div>
+<!-- Calendar -->
+<h2>Calendar</h2>
+<div>
+  <button onclick="prevMonth()">&lt; Prev</button>
+  <span id="month-year"></span>
+  <button onclick="nextMonth()">Next &gt;</button>
+</div>
+<div id="calendar-grid"></div>
 
-  <!-- Debug console (now available before scripts try to use it) -->
-  <div id="debug-console" style="background:#111; color:#0f0; font-family:monospace; padding:10px; height:150px; overflow:auto; font-size:12px;">
-    Debug console:
-  </div>
+<!-- Export / Import -->
+<h2>Data</h2>
+<button onclick="exportData()">Export JSON</button>
+<input type="file" id="import-file" onchange="importData(event)">
 
-  <!-- Debug console script (moved AFTER the element exists) -->
-  <script>
-    (function() {
-      const debugEl = document.getElementById('debug-console');
+<!-- Debug console -->
+<h2>Debug Console</h2>
+<div id="debug-console"></div>
 
-      function printToDebug(...args) {
-        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
-        debugEl.innerHTML += `<div>${message}</div>`;
-        debugEl.scrollTop = debugEl.scrollHeight;
-      }
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-      const originalLog = console.log;
-      const originalError = console.error;
+<script>
+  // ====== Firebase Configuration ======
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
 
-      console.log = function(...args) {
-        originalLog.apply(console, args);
-        printToDebug('[LOG]', ...args);
-      };
-
-      console.error = function(...args) {
-        originalError.apply(console, args);
-        printToDebug('<span style="color:red">[ERROR]</span>', ...args);
-      };
-
-      // Catch global errors
-      window.addEventListener("error", e => {
-        printToDebug('<span style="color:red">[ERROR]</span>', e.message);
-      });
-    })();
-  </script>
-
-  <!-- App scripts -->
-  <script src="js/users.js"></script>
-  <script src="js/templates.js"></script>
-  <script src="js/parser.js"></script>
-  <script src="js/calendar.js"></script>
-  <script src="js/main.js"></script>
-
-  <!-- Firebase integration -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      query,
-      orderBy,
-      onSnapshot,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-    import {
-      getAuth,
-      signInAnonymously,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-    // Your Firebase config (fixed storageBucket)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBCt2aZOWDLznozrVNTg4OIw7s5WBkx18Y",
-      authDomain: "shift-calendar-18355.firebaseapp.com",
-      projectId: "shift-calendar-18355",
-      storageBucket: "shift-calendar-18355.appspot.com",
-      messagingSenderId: "29766311162",
-      appId: "1:29766311162:web:11f376db291eae0550bd43",
-      measurementId: "G-4PEYYWDTFD"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    // Sign in anonymously
-    signInAnonymously(auth).catch(err => console.error("Anon sign-in failed:", err));
-
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        console.log("Signed in as:", user.uid);
-      }
+<!-- Main script -->
+<script src="your-script.js"></script>
+<script>
+  // Populate active-user dropdown whenever users update
+  function updateActiveUserDropdown() {
+    const select = document.getElementById('active-user');
+    select.innerHTML = '<option value="">Select User</option>';
+    users.forEach(user => {
+      const opt = document.createElement('option');
+      opt.value = user.id;
+      opt.textContent = user.name;
+      select.appendChild(opt);
     });
+  }
 
-    // Example Firestore functions — connect these to your existing addUser/addShift later
-    window.firebaseAddUser = async function(name, color) {
-      if (!name) return;
-      await addDoc(collection(db, "users"), {
-        name,
-        color,
-        createdAt: serverTimestamp()
-      });
-    };
+  // Attach listener for users changes
+  const origRenderUsers = renderUsers;
+  renderUsers = function() {
+    origRenderUsers();
+    updateActiveUserDropdown();
+  }
+</script>
 
-    window.firebaseAddShift = async function(userId, startISO, endISO, note = "") {
-      await addDoc(collection(db, "shifts"), {
-        userId,
-        startTime: startISO,
-        endTime: endISO,
-        note,
-        createdAt: serverTimestamp()
-      });
-    };
-
-    // Example: Realtime listener for shifts (update your UI here)
-    const shiftsQuery = query(collection(db, "shifts"), orderBy("createdAt", "desc"));
-    onSnapshot(shiftsQuery, snapshot => {
-      const listEl = document.getElementById("shiftsList");
-      if (!listEl) return;
-      listEl.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement("li");
-        li.textContent = `${data.userId} — ${data.startTime} → ${data.endTime} (${data.note || ""})`;
-        listEl.appendChild(li);
-      });
-    });
-  </script>
 </body>
 </html>
