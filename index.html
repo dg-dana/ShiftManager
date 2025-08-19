@@ -67,33 +67,51 @@
       <input type="file" id="import-file" onchange="importData(event)">
       <button onclick="exportData()">Export Data</button>
     </section>
+
+    <!-- Shifts List (for Firebase debug/testing) -->
+    <section id="shifts-section">
+      <h2>Shifts (Live from Firebase)</h2>
+      <ul id="shiftsList"></ul>
+    </section>
   </div>
 
-  <!-- Existing scripts -->
-    <script>
-      (function() {
-        const debugEl = document.getElementById('debug-console');
-      
-        function printToDebug(...args) {
-          const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
-          debugEl.innerHTML += `<div>${message}</div>`;
-          debugEl.scrollTop = debugEl.scrollHeight;
-        }
-      
-        const originalLog = console.log;
-        const originalError = console.error;
-      
-        console.log = function(...args) {
-          originalLog.apply(console, args);
-          printToDebug('[LOG]', ...args);
-        };
-      
-        console.error = function(...args) {
-          originalError.apply(console, args);
-          printToDebug('<span style="color:red">[ERROR]</span>', ...args);
-        };
-      })();
+  <!-- Debug console (now available before scripts try to use it) -->
+  <div id="debug-console" style="background:#111; color:#0f0; font-family:monospace; padding:10px; height:150px; overflow:auto; font-size:12px;">
+    Debug console:
+  </div>
+
+  <!-- Debug console script (moved AFTER the element exists) -->
+  <script>
+    (function() {
+      const debugEl = document.getElementById('debug-console');
+
+      function printToDebug(...args) {
+        const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+        debugEl.innerHTML += `<div>${message}</div>`;
+        debugEl.scrollTop = debugEl.scrollHeight;
+      }
+
+      const originalLog = console.log;
+      const originalError = console.error;
+
+      console.log = function(...args) {
+        originalLog.apply(console, args);
+        printToDebug('[LOG]', ...args);
+      };
+
+      console.error = function(...args) {
+        originalError.apply(console, args);
+        printToDebug('<span style="color:red">[ERROR]</span>', ...args);
+      };
+
+      // Catch global errors
+      window.addEventListener("error", e => {
+        printToDebug('<span style="color:red">[ERROR]</span>', e.message);
+      });
+    })();
   </script>
+
+  <!-- App scripts -->
   <script src="js/users.js"></script>
   <script src="js/templates.js"></script>
   <script src="js/parser.js"></script>
@@ -118,12 +136,12 @@
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-    // Your Firebase config
+    // Your Firebase config (fixed storageBucket)
     const firebaseConfig = {
       apiKey: "AIzaSyBCt2aZOWDLznozrVNTg4OIw7s5WBkx18Y",
       authDomain: "shift-calendar-18355.firebaseapp.com",
       projectId: "shift-calendar-18355",
-      storageBucket: "shift-calendar-18355.firebasestorage.app",
+      storageBucket: "shift-calendar-18355.appspot.com",
       messagingSenderId: "29766311162",
       appId: "1:29766311162:web:11f376db291eae0550bd43",
       measurementId: "G-4PEYYWDTFD"
@@ -177,8 +195,5 @@
       });
     });
   </script>
-  <div id="debug-console" style="background:#111; color:#0f0; font-family:monospace; padding:10px; height:150px; overflow:auto; font-size:12px;">
-  Debug console:
-</div>
 </body>
 </html>
