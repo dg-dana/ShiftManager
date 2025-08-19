@@ -1,15 +1,16 @@
-// Firestore-backed users array
+// ==== FIRESTORE-BACKED USERS ARRAY ====
 let users = [];
 
-// Real-time Firestore listener for "users" collection
+// ==== FIRESTORE IMPORTS ====
 import { 
   collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc 
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+// Firestore references
 const usersRef = collection(window.db, "users");
 const usersQuery = query(usersRef, orderBy("createdAt", "asc"));
 
-// Listen for changes in Firestore and update UI
+// ==== REAL-TIME LISTENER ====
 onSnapshot(usersQuery, snapshot => {
   users = snapshot.docs.map(docSnap => ({
     id: docSnap.id, // Firestore document ID
@@ -19,7 +20,7 @@ onSnapshot(usersQuery, snapshot => {
   updateUserSelects();
 });
 
-// Add a new user to Firestore
+// ==== ADD USER ====
 async function addUser() {
   const nameInput = document.getElementById('user-name');
   const colorInput = document.getElementById('user-color');
@@ -29,18 +30,9 @@ async function addUser() {
   console.log('Attempting to add user:', { name, color, userCount: users.length });
 
   // Validation
-  if (!name) {
-    alert('Please enter a name.');
-    return;
-  }
-  if (users.length >= 5) {
-    alert('Maximum 5 users allowed.');
-    return;
-  }
-  if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) {
-    alert('This name is already taken.');
-    return;
-  }
+  if (!name) return alert('Please enter a name.');
+  if (users.length >= 5) return alert('Maximum 5 users allowed.');
+  if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) return alert('This name is already taken.');
 
   try {
     await addDoc(usersRef, {
@@ -57,7 +49,7 @@ async function addUser() {
   }
 }
 
-// Remove a user from Firestore
+// ==== REMOVE USER ====
 async function removeUser(id) {
   console.log('Removing user with id:', id);
   try {
@@ -68,7 +60,7 @@ async function removeUser(id) {
   }
 }
 
-// Update user list in the DOM
+// ==== UPDATE USER LIST ====
 function updateUserList() {
   const userList = document.getElementById('user-list');
   if (!userList) {
@@ -85,7 +77,7 @@ function updateUserList() {
   console.log('User list updated:', users);
 }
 
-// Update dropdowns
+// ==== UPDATE USER SELECT DROPDOWNS ====
 function updateUserSelects() {
   const activeSelect = document.getElementById('active-user');
   const templateSelect = document.getElementById('template-user');
@@ -93,9 +85,11 @@ function updateUserSelects() {
     console.error('Error: Select elements not found');
     return;
   }
-  const options = ['<option value="">Select User</option>'].concat(
-    users.map(u => `<option value="${u.id}">${u.name}</option>`)
-  ).join('');
+
+  const options = ['<option value="">Select User</option>']
+    .concat(users.map(u => `<option value="${u.id}">${u.name}</option>`))
+    .join('');
+
   activeSelect.innerHTML = options;
   templateSelect.innerHTML = options;
   console.log('User selects updated:', users);
